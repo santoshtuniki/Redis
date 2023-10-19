@@ -28,19 +28,27 @@ redisClient.on('error', (err) => {
 });
 
 app.get("/photos", async (req, res) => {
-    const { albumId } = req.query;
+    const albumId = req.query.albumId;
+
+    // check if query exists & if exists ensure that it is valid
+    const photoId = parseInt(albumId);
+    if ((req.query.hasOwnProperty(albumId) && isNaN(photoId) || photoId <= 0)) {
+        return res.status(400).json({ error: "Invalid photo ID" });
+    }
 
     try {
-        const photos = await redisClient.GET("photos");
+        const photosKey = `photos?albumId=${albumId}`;
+        const photos = await redisClient.GET(photosKey);
         if (photos !== null) {
             return res.json(JSON.parse(photos));
         } else {
-            const {data} = await axios.get(EXTERNAL_API_URL, { params: { albumId } });
-            await redisClient.SETEX("photos", DEFAULT_EXPIRATION, JSON.stringify(data));
+            const { data } = await axios.get(EXTERNAL_API_URL, { params: { albumId } });
+            await redisClient.SETEX(`photos?albumId=${albumId}`, DEFAULT_EXPIRATION, JSON.stringify(data));
             return res.json(data);
         }
     } catch (error) {
         console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 
 })
