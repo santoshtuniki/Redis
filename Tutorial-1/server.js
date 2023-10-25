@@ -32,7 +32,7 @@ app.get("/photos", async (req, res) => {
 
     // check if query exists & if exists ensure that it is valid
     const photoId = parseInt(albumId);
-    if ((req.query.hasOwnProperty("albumId") && isNaN(photoId) || photoId <= 0)) {
+    if (req.query.hasOwnProperty("albumId") && (isNaN(photoId) || photoId <= 0)) {
         return res.status(400).json({ error: "Invalid album ID" });
     }
 
